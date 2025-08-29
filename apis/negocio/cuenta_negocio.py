@@ -25,7 +25,7 @@ class CuentaNegocio:
         """Guarda los datos en el archivo JSON"""
         os.makedirs(os.path.dirname(self.archivo_datos), exist_ok=True)
         with open(self.archivo_datos, 'w', encoding='utf-8') as f:
-            datos = [cuenta.dict() for cuenta in self.cuentas_db]
+            datos = [cuenta.model_dump() for cuenta in self.cuentas_db]
             json.dump(datos, f, ensure_ascii=False, indent=2)
     
     def _generar_numero_cuenta(self) -> str:
@@ -76,7 +76,7 @@ class CuentaNegocio:
         """Actualiza el estado de una cuenta"""
         for index, cuenta in enumerate(self.cuentas_db):
             if cuenta.numeroCuenta == numero_cuenta:
-                cuenta_actualizada = cuenta.copy(update={"estadoCuenta": estado_cuenta})
+                cuenta_actualizada = cuenta.model_copy(update={"estadoCuenta": estado_cuenta})
                 self.cuentas_db[index] = cuenta_actualizada
                 self._guardar_datos()
                 return cuenta_actualizada
@@ -110,7 +110,7 @@ class CuentaNegocio:
         """Actualiza el saldo de una cuenta"""
         for index, cuenta in enumerate(self.cuentas_db):
             if cuenta.numeroCuenta == numero_cuenta:
-                cuenta_actualizada = cuenta.copy(update={"saldoActual": nuevo_saldo})
+                cuenta_actualizada = cuenta.model_copy(update={"saldoActual": nuevo_saldo})
                 self.cuentas_db[index] = cuenta_actualizada
                 self._guardar_datos()
                 return cuenta_actualizada

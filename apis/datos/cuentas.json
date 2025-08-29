@@ -1,0 +1,27 @@
+[
+  {
+    "numeroCuenta": "1001234567",
+    "idCliente": 1,
+    "tipoCuenta": "ahorro",
+    "saldoActual": 1500000.0,
+    "limiteCuenta": null,
+    "estadoCuenta": "activa"
+  },
+  {
+    "numeroCuenta": "1009876543",
+    "idCliente": 2,
+    "tipoCuenta": "corriente",
+    "saldoActual": 2500000.0,
+    "limiteCuenta": 5000000.0,
+    "estadoCuenta": "activa"
+  },
+  {
+    "numeroCuenta": "1001672621",
+    "idCliente": 2,
+    "tipoCuenta": "ahorro",
+    "saldoActual": 150000.0,
+    "limiteCuenta": null,
+    "estadoCuenta": "activa"
+  }
+
+]

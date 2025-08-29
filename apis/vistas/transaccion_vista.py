@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 from entidades.transaccion import Transaccion, OperacionBancaria, TransferenciaBancaria
-from negocio.transaccion_negocio import TransaccionNegocio
+from negocio.transacciones_negocio import TransaccionNegocio
 
 router = APIRouter(prefix="/transacciones", tags=["Transacciones"])
 transaccion_negocio = TransaccionNegocio()
