@@ -22,7 +22,7 @@ class ClienteNegocio:
         """Guarda los datos en el archivo JSON"""
         os.makedirs(os.path.dirname(self.archivo_datos), exist_ok=True)
         with open(self.archivo_datos, 'w', encoding='utf-8') as f:
-            datos = [cliente.dict() for cliente in self.clientes_db]
+            datos = [cliente.model_dump() for cliente in self.clientes_db]
             json.dump(datos, f, ensure_ascii=False, indent=2)
     
     def obtener_todos_clientes(self) -> List[Cliente]:
@@ -56,8 +56,8 @@ class ClienteNegocio:
         """Actualiza un cliente existente"""
         for index, cliente in enumerate(self.clientes_db):
             if cliente.idCliente == id_cliente:
-                datos_actualizados = datos_actualizacion.dict(exclude_unset=True)
-                cliente_actualizado = cliente.copy(update=datos_actualizados)
+                datos_actualizados = datos_actualizacion.model_dump(exclude_unset=True)
+                cliente_actualizado = cliente.model_copy(update=datos_actualizados)
                 self.clientes_db[index] = cliente_actualizado
                 self._guardar_datos()
                 return cliente_actualizado

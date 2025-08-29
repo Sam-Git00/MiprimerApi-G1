@@ -33,7 +33,7 @@ class TransaccionNegocio:
         with open(self.archivo_datos, 'w', encoding='utf-8') as f:
             datos = []
             for transaccion in self.transacciones_db:
-                transaccion_dict = transaccion.dict()
+                transaccion_dict = transaccion.model_dump()
                 # Convertir datetime a string para JSON
                 transaccion_dict['fechaTransaccion'] = transaccion.fechaTransaccion.isoformat()
                 datos.append(transaccion_dict)
