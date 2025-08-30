@@ -3,20 +3,20 @@
 # Autores
 Samuel Oliveros Granada
 Julian Morales Saavedra
-##[PANTALLAZOS DE POSTMAN](https://drive.google.com/drive/folders/1UrkmbECGcl_08ozzAXWk8exO4xzylLCj?usp=drive_link)
+
 ## Descripción
 
 API REST desarrollada con FastAPI para la gestión integral de un sistema bancario. Proporciona funcionalidades completas para la administración de clientes, cuentas bancarias y transacciones financieras. Utiliza archivos JSON como base de datos simulada para facilitar el desarrollo y pruebas.
 
 ## Características Principales
-
+ 
 - **Gestión de Clientes**: CRUD completo para clientes bancarios
 - **Gestión de Cuentas**: Administración de cuentas de ahorro y corriente
 - **Transacciones Bancarias**: Operaciones de consignación, retiro y transferencia
 - **Documentación Interactiva**: Swagger UI integrado para pruebas de API
 - **Validación de Datos**: Modelos Pydantic para validación automática
 - **Manejo de Errores**: Respuestas HTTP apropiadas con mensajes descriptivos
-
+[PANTALLAZOS DE POSTMAN](https://drive.google.com/drive/folders/1UrkmbECGcl_08ozzAXWk8exO4xzylLCj?usp=drive_link)
 ## Requisitos del Sistema
 
 ### Software Requerido
