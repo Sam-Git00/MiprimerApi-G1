@@ -16,6 +16,7 @@ API REST desarrollada con FastAPI para la gestión integral de un sistema bancar
 - **Documentación Interactiva**: Swagger UI integrado para pruebas de API
 - **Validación de Datos**: Modelos Pydantic para validación automática
 - **Manejo de Errores**: Respuestas HTTP apropiadas con mensajes descriptivos
+  También están las pruebas hechas en postman para mostrar la funcionalidad - 
 [PANTALLAZOS DE POSTMAN](https://drive.google.com/drive/folders/1UrkmbECGcl_08ozzAXWk8exO4xzylLCj?usp=drive_link)
 ## Requisitos del Sistema
 
