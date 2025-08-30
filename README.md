@@ -1,8 +1,11 @@
-# API Bancaria G1 - Versión Simplificada
+# API Bancaria G1 - Versión Simplificada sin Arquitectura
 
+# AUTORES
+Samuel Oliveros Granada
+Julian Morales Saavedra
 ## Descripción
 
-API REST desarrollada con FastAPI para la gestión integral de un sistema bancario simplificado. Proporciona funcionalidades completas para la administración de clientes, cuentas bancarias y transacciones financieras. Utiliza archivos JSON como base de datos simulada para facilitar el desarrollo y pruebas.
+API REST desarrollada con FastAPI para la gestión integral de un sistema bancario. Proporciona funcionalidades completas para la administración de clientes, cuentas bancarias y transacciones financieras. Utiliza archivos JSON como base de datos simulada para facilitar el desarrollo y pruebas.
 
 ## Características Principales
 
@@ -31,7 +34,7 @@ python-multipart==0.0.6
 
 ## Instalación y Configuración
 
-### 1. Clonar el Repositorio
+### 1. Clonar el Repositorio / También puedes descargar o clonar el repositorio desde Vscode
 ```bash
 git clone <url-del-repositorio>
 cd MiprimerApi-G1
@@ -41,13 +44,28 @@ cd MiprimerApi-G1
 ```bash
 pip install -r requirements.txt
 ```
+También puedes
+```bash
+pip install fastapi==0.104.1
+pip install "uvicorn[standard]==0.24.0"
+pip install pydantic==2.5.0
+pip install python-multipart==0.0.6
+```
 
 ### 3. Ejecutar la Aplicación
 ```bash
 cd apis
 python main.py
 ```
-
+```bash
+cd apis
+uvicorn main:app --reload
+```
+```bash
+cd apis
+uvicorn apis.main:app --host 127.0.0.1 --port 8000 --reload
+```
+Si no... es válido rezar.
 La API estará disponible en: `http://127.0.0.1:8000`
 
 ### 4. Acceder a la Documentación
@@ -355,29 +373,11 @@ curl -X POST "http://127.0.0.1:8000/transacciones/consignar" \
      }'
 ```
 
-## Notas Importantes
-
-### Limitaciones Conocidas
-- Al momento de crear cuentas y utilizar el ID del cliente, pueden presentarse errores de validación
-- Los datos se almacenan en memoria y se pierden al reiniciar la aplicación
-- No se implementa persistencia de datos en base de datos real
-
-### Consideraciones de Seguridad
-- Esta es una versión simplificada para fines educativos
-- No implementa autenticación ni autorización
-- No se recomienda para uso en producción sin implementar medidas de seguridad adicionales
-
 ### Mejoras Futuras
 - Implementar base de datos real (PostgreSQL, MySQL)
 - Agregar autenticación JWT
 - Implementar validaciones más robustas
 - Agregar logs y monitoreo
 - Implementar tests automatizados
+- Implementar arquitectura de capas
 
-## Soporte y Contacto
-
-Para reportar problemas o solicitar mejoras, por favor crear un issue en el repositorio del proyecto.
-
-## Licencia
-
-Este proyecto está desarrollado con fines educativos y de aprendizaje.
