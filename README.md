@@ -3,6 +3,7 @@
 # Autores
 Samuel Oliveros Granada
 Julian Morales Saavedra
+Juan Felipe Silva Cardona
 
 ## Descripción
 
