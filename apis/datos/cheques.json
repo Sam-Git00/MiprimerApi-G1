@@ -1,0 +1,32 @@
+[
+  {
+    "idCheque": 1,
+    "numeroCheque": "CHQ-001-2024",
+    "idCuenta": 1,
+    "monto": 500000.0,
+    "beneficiario": "Juan Pérez Gómez",
+    "fechaEmision": "2024-01-15",
+    "fechaVencimiento": "2024-07-15",
+    "estadoCheque": "Emitido"
+  },
+  {
+    "idCheque": 2,
+    "numeroCheque": "CHQ-002-2024",
+    "idCuenta": 2,
+    "monto": 1200000.0,
+    "beneficiario": "Empresa ABC S.A.S.",
+    "fechaEmision": "2024-02-01",
+    "fechaVencimiento": "2024-08-01",
+    "estadoCheque": "Cobrado"
+  },
+  {
+    "idCheque": 3,
+    "numeroCheque": "CHQ-003-2024",
+    "idCuenta": 1,
+    "monto": 300000.0,
+    "beneficiario": "María López Silva",
+    "fechaEmision": "2024-03-10",
+    "fechaVencimiento": "2024-09-10",
+    "estadoCheque": "Rechazado"
+  }
+]

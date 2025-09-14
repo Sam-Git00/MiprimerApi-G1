@@ -1,0 +1,50 @@
+[
+  {
+    "idCliente": 1,
+    "nombreCompleto": "Juan Pérez García",
+    "correoElectronico": "juan.perez@email.com",
+    "numeroTelefono": "+57 300 123 4567",
+    "numeroDocumento": "12345678",
+    "tipoDocumento": "CC",
+    "id_usuario_creacion": "550e8400-e29b-41d4-a716-446655440001",
+    "id_usuario_edicion": null,
+    "fecha_creacion": "2024-01-15T10:30:00Z",
+    "fecha_edicion": null
+  },
+  {
+    "idCliente": 2,
+    "nombreCompleto": "María López Rodríguez",
+    "correoElectronico": "maria.lopez@email.com",
+    "numeroTelefono": "+57 300 987 6543",
+    "numeroDocumento": "87654321",
+    "tipoDocumento": "CC",
+    "id_usuario_creacion": "550e8400-e29b-41d4-a716-446655440002",
+    "id_usuario_edicion": "550e8400-e29b-41d4-a716-446655440003",
+    "fecha_creacion": "2024-01-10T14:20:00Z",
+    "fecha_edicion": "2024-02-05T16:45:00Z"
+  },
+  {
+    "idCliente": 6548,
+    "nombreCompleto": "Juan Andres",
+    "correoElectronico": "juanandres@email.com",
+    "numeroTelefono": "+57 325 125 6879",
+    "numeroDocumento": "15489",
+    "tipoDocumento": "CE",
+    "id_usuario_creacion": "550e8400-e29b-41d4-a716-446655440001",
+    "id_usuario_edicion": null,
+    "fecha_creacion": "2024-02-20T09:15:00Z",
+    "fecha_edicion": null
+  },
+  {
+    "idCliente": 1254,
+    "nombreCompleto": "Julian andres",
+    "correoElectronico": "juan.perez@email.com",
+    "numeroTelefono": "+57 300 123 4567",
+    "numeroDocumento": "123456780",
+    "tipoDocumento": "CC",
+    "id_usuario_creacion": "550e8400-e29b-41d4-a716-446655440002",
+    "id_usuario_edicion": null,
+    "fecha_creacion": "2024-03-01T11:00:00Z",
+    "fecha_edicion": null
+  }
+]

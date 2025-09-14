@@ -1,13 +1,12 @@
-# API Bancaria G1 - Versión Simplificada sin Arquitectura
+# API Bancaria G1 - Versión con SQLAlchemy
 
 # Autores
 Samuel Oliveros Granada
 Julian Morales Saavedra
-Juan Felipe Silva Cardona
 
 ## Descripción
 
-API REST desarrollada con FastAPI para la gestión integral de un sistema bancario. Proporciona funcionalidades completas para la administración de clientes, cuentas bancarias y transacciones financieras. Utiliza archivos JSON como base de datos simulada para facilitar el desarrollo y pruebas.
+API REST desarrollada con FastAPI para la gestión integral de un sistema bancario. Proporciona funcionalidades completas para la administración de clientes, cuentas bancarias y transacciones financieras. Inicialmente utilizaba archivos JSON como base de datos simulada, pero ahora ha evolucionado a una implementación con SQLAlchemy y bases de datos relacionales para un manejo más robusto y escalable de los datos.
 
 ## Características Principales
  
@@ -17,6 +16,11 @@ API REST desarrollada con FastAPI para la gestión integral de un sistema bancar
 - **Documentación Interactiva**: Swagger UI integrado para pruebas de API
 - **Validación de Datos**: Modelos Pydantic para validación automática
 - **Manejo de Errores**: Respuestas HTTP apropiadas con mensajes descriptivos
+- **SQLAlchemy ORM**: Implementación de mapeo objeto-relacional para gestión de base de datos
+- **Modelos Relacionales**: Estructura de datos normalizada con relaciones entre entidades
+- **Soft Delete**: Implementación de borrado lógico para mantener integridad histórica
+- **Filtros Avanzados**: Búsqueda y filtrado de datos con múltiples criterios
+- **Scripts de Migración**: Herramientas para migrar datos desde JSON a bases de datos SQL
  
   ## Postman
  pruebas hechas en postman para mostrar la funcionalidad
@@ -26,6 +30,7 @@ API REST desarrollada con FastAPI para la gestión integral de un sistema bancar
 ### Software Requerido
 - **Python 3.8 o superior**
 - **pip** (gestor de paquetes de Python)
+- **Base de datos SQL** (SQL Server, PostgreSQL, SQLite)
 
 ### Dependencias
 Las dependencias se instalan automáticamente con el archivo `requirements.txt`:
@@ -35,6 +40,8 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.5.0
 python-multipart==0.0.6
+sqlalchemy==2.0.23
+python-dotenv==1.0.0
 ```
 
 ## Instalación y Configuración
@@ -47,7 +54,7 @@ cd MiprimerApi-G1
 
 ### 2. Instalar Dependencias
 ```bash
-pip install -r requirements.txt
+py -m pip install -r requirements.txt
 ```
 También puedes
 ```bash
@@ -55,9 +62,32 @@ pip install fastapi==0.104.1
 pip install "uvicorn[standard]==0.24.0"
 pip install pydantic==2.5.0
 pip install python-multipart==0.0.6
+pip install sqlalchemy==2.0.23
+pip install python-dotenv==1.0.0
 ```
 
-### 3. Ejecutar la Aplicación
+### 3. Configurar variables de entorno
+Crea un archivo `.env` en la carpeta `apis` con las siguientes variables:
+```
+DB_TYPE=sqlserver  # o postgresql, sqlite
+DB_HOST=localhost
+DB_PORT=1433  # Puerto por defecto para SQL Server
+DB_USER=usuario
+DB_PASSWORD=contraseña
+DB_NAME=nombre_base_datos
+```
+
+### 4. Migrar la base de datos
+```bash
+python -m apis.scripts.migrate_database
+```
+
+### 5. Migrar datos de JSON a la base de datos (opcional)
+```bash
+python -m apis.scripts.migrate_json_to_db
+```
+
+### 6. Ejecutar la Aplicación
 ```bash
 cd apis
 python main.py
@@ -73,7 +103,7 @@ uvicorn apis.main:app --host 127.0.0.1 --port 8000 --reload
 Si no... es válido rezar.
 La API estará disponible en: `http://127.0.0.1:8000`
 
-### 4. Acceder a la Documentación
+### 7. Acceder a la Documentación
 - **Swagger UI**: `http://127.0.0.1:8000/docs`
 - **ReDoc**: `http://127.0.0.1:8000/redoc`
 
@@ -83,10 +113,25 @@ La API estará disponible en: `http://127.0.0.1:8000`
 MiprimerApi-G1/
 ├── apis/
 │   ├── main.py                 # Archivo principal de la API
-│   └── datos/                  # Base de datos JSON simulada
-│       ├── clientes.json       # Datos de clientes
-│       ├── cuentas.json        # Datos de cuentas
-│       └── transacciones.json  # Datos de transacciones
+│   ├── .env                    # Variables de entorno para la conexión a la BD
+│   ├── database/               # Configuración de la base de datos
+│   │   ├── __init__.py
+│   │   └── connection.py       # Configuración de conexión a la base de datos
+│   ├── datos/                  # Base de datos JSON simulada (para compatibilidad)
+│   │   ├── clientes.json       # Datos de clientes
+│   │   ├── cuentas.json        # Datos de cuentas
+│   │   └── transacciones.json  # Datos de transacciones
+│   ├── endpoints/              # Controladores de la API
+│   │   ├── clientes.py
+│   │   ├── cuentas.py
+│   │   ├── transacciones.py
+│   │   └── ...
+│   ├── models/                 # Modelos y esquemas
+│   │   ├── models.py           # Modelos SQLAlchemy
+│   │   └── schemas.py          # Esquemas Pydantic
+│   └── scripts/                # Scripts de utilidad
+│       ├── migrate_database.py # Script para crear tablas
+│       └── migrate_json_to_db.py # Script para migrar datos JSON a SQL
 ├── requirements.txt            # Dependencias del proyecto
 └── README.md                   # Este archivo
 ```
@@ -101,7 +146,7 @@ Información general de la API bancaria.
 **Respuesta:**
 ```json
 {
-    "message": "API Bancaria G1 - Versión Simplificada",
+    "message": "API Bancaria G1 - Versión con SQLAlchemy",
     "version": "1.0.0",
     "endpoints": {
         "clientes": "/clientes",
@@ -172,7 +217,7 @@ Crea un nuevo cliente bancario.
 Actualiza la información de un cliente existente.
 
 #### DELETE /clientes/{id_cliente}
-Elimina un cliente del sistema.
+Elimina un cliente del sistema (borrado lógico con SQLAlchemy).
 
 ### Gestión de Cuentas
 
@@ -203,7 +248,7 @@ Crea una nueva cuenta bancaria.
 Actualiza la información de una cuenta existente.
 
 #### DELETE /cuentas/{numero_cuenta}
-Elimina una cuenta del sistema.
+Elimina una cuenta del sistema (borrado lógico con SQLAlchemy).
 
 ### Gestión de Transacciones
 
@@ -234,7 +279,7 @@ Crea una nueva transacción bancaria.
 Actualiza la información de una transacción existente.
 
 #### DELETE /transacciones/{id_transaccion}
-Elimina una transacción del sistema.
+Elimina una transacción del sistema (borrado lógico con SQLAlchemy).
 
 ### Operaciones Bancarias Especiales
 
@@ -328,6 +373,19 @@ Realiza una transferencia entre dos cuentas bancarias.
 }
 ```
 
+## Migración desde JSON a Base de Datos
+El proyecto incluye scripts para migrar datos desde los archivos JSON a una base de datos SQL:
+
+1. Asegúrate de tener configuradas las variables de entorno para la conexión a la base de datos en el archivo `.env`.
+2. Ejecuta el script de migración de base de datos para crear las tablas:
+   ```bash
+   python -m apis.scripts.migrate_database
+   ```
+3. Ejecuta el script de migración de datos JSON a la base de datos:
+   ```bash
+   python -m apis.scripts.migrate_json_to_db
+   ```
+
 ## Códigos de Estado HTTP
 
 - **200**: Operación exitosa
@@ -378,11 +436,17 @@ curl -X POST "http://127.0.0.1:8000/transacciones/consignar" \
      }'
 ```
 
+### Mejoras Implementadas
+- Migración de base de datos JSON a SQL con SQLAlchemy
+- Implementación de modelos relacionales
+- Borrado lógico (soft delete) para mantener integridad histórica
+- Filtros avanzados para búsqueda de datos
+- Scripts de migración para facilitar la transición
+
 ### Mejoras Futuras
-- Implementar base de datos real (PostgreSQL, MySQL)
-- Agregar autenticación JWT
+- Implementar autenticación JWT
+-Implementar CORS
 - Implementar validaciones más robustas
 - Agregar logs y monitoreo
 - Implementar tests automatizados
-- Implementar arquitectura de capas
-
+- Implementar arquitectura de capas completa
