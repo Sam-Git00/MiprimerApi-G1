@@ -1,0 +1,50 @@
+[
+  {
+    "idPrestamo": 1,
+    "idCliente": 1,
+    "numeroPrestamo": "PREST-001",
+    "montoPrestado": 10000000.0,
+    "tasaInteres": 12.5,
+    "plazoMeses": 24,
+    "fechaDesembolso": "2024-01-15",
+    "saldoPendiente": 8500000.0,
+    "estadoPrestamo": "Aprobado",
+    "idCuenta": 1,
+    "id_usuario_creacion": "550e8400-e29b-41d4-a716-446655440001",
+    "id_usuario_edicion": "550e8400-e29b-41d4-a716-446655440003",
+    "fecha_creacion": "2024-01-15T09:00:00Z",
+    "fecha_edicion": "2024-02-20T11:30:00Z"
+  },
+  {
+    "idPrestamo": 2,
+    "idCliente": 2,
+    "numeroPrestamo": "PREST-002",
+    "montoPrestado": 5000000.0,
+    "tasaInteres": 15.0,
+    "plazoMeses": 12,
+    "fechaDesembolso": "2024-03-01",
+    "saldoPendiente": 3200000.0,
+    "estadoPrestamo": "Aprobado",
+    "idCuenta": 2,
+    "id_usuario_creacion": "550e8400-e29b-41d4-a716-446655440002",
+    "id_usuario_edicion": null,
+    "fecha_creacion": "2024-03-01T10:15:00Z",
+    "fecha_edicion": null
+  },
+  {
+    "idPrestamo": 3,
+    "idCliente": 3,
+    "numeroPrestamo": "PREST-003",
+    "montoPrestado": 2000000.0,
+    "tasaInteres": 10.0,
+    "plazoMeses": 36,
+    "fechaDesembolso": "2023-06-15",
+    "saldoPendiente": 0.0,
+    "estadoPrestamo": "Pagado",
+    "idCuenta": 3,
+    "id_usuario_creacion": "550e8400-e29b-41d4-a716-446655440001",
+    "id_usuario_edicion": "550e8400-e29b-41d4-a716-446655440002",
+    "fecha_creacion": "2023-06-15T14:00:00Z",
+    "fecha_edicion": "2024-01-10T16:45:00Z"
+  }
+]
