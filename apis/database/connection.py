@@ -73,3 +73,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def get_engine():
+    """Obtener el motor de la base de datos"""
+    return engine

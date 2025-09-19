@@ -450,3 +450,31 @@ curl -X POST "http://127.0.0.1:8000/transacciones/consignar" \
 - Agregar logs y monitoreo
 - Implementar tests automatizados
 - Implementar arquitectura de capas completa
+
+
+
+
+
+
+
+
+
+
+Se realizaron los siguientes cambios :
+
+1.  **Refactorización de Modelos SQLAlchemy (`apis/models/models.py`):**
+    *   **Creación del modelo `Usuario`:** Se añadió un nuevo modelo `Usuario` para gestionar la autenticación y los campos de auditoría, como `id_usuario_creacion` y `id_usuario_edicion`, que son esenciales para el seguimiento de cambios.
+    *   **Actualización de modelos existentes (`Cliente`, `Cuenta`, `Transaccion`):**
+        *   Se corrigieron los tipos de datos para alinearlos con el esquema de SQL Server (ej. `String(150)` para correos, `Numeric(15,2)` para saldos/montos, `UNIQUEIDENTIFIER` para IDs de usuario).
+        *   Se añadió el campo `id_transaccion` al modelo `Transaccion` para que coincida con el esquema SQL.
+        *   Se establecieron relaciones de clave foránea (`ForeignKey`) hacia el nuevo modelo `Usuario` para los campos de auditoría en todos los modelos relevantes.
+        *   Se ajustaron y añadieron relaciones (`relationship`) para asegurar la correcta conexión entre las entidades del ORM.
+    *   **Creación de modelos faltantes (`Tarjeta`, `Prestamo`, `Sucursal`, `Empleado`, `Cheque`, `Inversion`):** Se crearon los modelos SQLAlchemy correspondientes a todas las tablas restantes en la base de datos, asegurando que sus campos, tipos de datos y relaciones reflejen fielmente el esquema de `create_database.sql`.
+
+2.  **Consolidación de la Lógica de Conexión a la Base de Datos (`apis/database/connection.py`):**
+    *   Se añadió la función `get_engine()` para exportar el motor de SQLAlchemy, permitiendo que otros scripts lo utilicen de manera consistente.
+
+3.  **Refactorización y Consolidación de Scripts de Migración (`apis/scripts/migrate_json_to_db.py`):**
+    *   **Inclusión del usuario administrador:** Se añadió lógica para insertar un usuario administrador por defecto al inicio del proceso de migración, lo que es necesario para los campos de auditoría.
+    *   **Uso consistente del ORM de SQLAlchemy:** Se modificaron todas las funciones de migración (`migrate_clientes`, `migrate_cuentas`, `migrate_transacciones`, `migrate_tarjetas`, `migrate_prestamos`, `migrate_sucursales`, `migrate_empleados`, `migrate_cheques`, `migrate_inversiones`) para que utilicen exclusivamente el ORM de SQLAlchemy para la verificación de existencia y la inserción de datos. Esto elimina la dependencia de sentencias SQL crudas, haciendo el código más robusto y fácil de mantener.
+    *   **Consolidación de limpieza de archivos JSON:** Se unificaron las funciones de eliminación de archivos JSON, manteniendo una sola función (`delete_json_files`) y actualizando `ejecutar_migracion` para usarla, simplificando el proceso post-migración.

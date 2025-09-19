@@ -5,17 +5,43 @@ from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 from dotenv import load_dotenv
+import uuid
 
 # Agregar el directorio raíz al path para poder importar los módulos
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from apis.models.models import Base, Cliente, Cuenta, Transaccion
-from apis.database.connection import get_engine, get_db, SessionLocal
+from apis.models.models import Base, Cliente, Cuenta, Transaccion, Usuario, Tarjeta, Prestamo, Empleado, Sucursal, Cheque, Inversion
+from apis.database.connection import get_engine, SessionLocal
 
 load_dotenv()
 
 # Obtener el motor de SQLAlchemy
 engine = get_engine()
+
+def migrate_admin_user():
+    """Inserta el usuario administrador por defecto si no existe"""
+    try:
+        with SessionLocal() as session:
+            admin_user = session.query(Usuario).filter(Usuario.correo_electronico == 'admin@bancoapi.com').first()
+            if not admin_user:
+                admin_user_id = uuid.UUID('550e8400-e29b-41d4-a716-446655440001') # ID fijo para el admin
+                nuevo_admin = Usuario(
+                    id=admin_user_id,
+                    nombre_usuario='admin',
+                    correo_electronico='admin@bancoapi.com',
+                    contrasena='hashed_password_here', # Considerar usar un hash real en producción
+                    rol='administrador',
+                    fecha_creacion=datetime.now(),
+                    activo=True
+                )
+                session.add(nuevo_admin)
+                session.commit()
+                print("✅ Usuario administrador insertado exitosamente.")
+            else:
+                print("Usuario administrador ya existe.")
+    except Exception as e:
+        print(f"❌ Error al insertar usuario administrador: {e}")
+        raise
 
 
 def migrate_json_to_db():
@@ -27,6 +53,9 @@ def migrate_json_to_db():
         with engine.connect() as connection:
             result = connection.execute(text("SELECT 1"))
             print("Conexión a la base de datos exitosa")
+
+        # Insertar usuario administrador antes de migrar otros datos que dependen de él
+        migrate_admin_user()
         
         # Migrar datos de clientes
         migrate_clientes()
@@ -196,50 +225,36 @@ def migrate_tarjetas():
                 tarjetas = json.load(f)
             
             with SessionLocal() as session:
-                for tarjeta in tarjetas:
+                for tarjeta_data in tarjetas:
                     # Verificar si la tarjeta ya existe
-                    result = session.execute(
-                        text("SELECT COUNT(*) FROM tarjetas WHERE id_tarjeta = :id_tarjeta"),
-                        {"id_tarjeta": tarjeta["idTarjeta"]}
-                    ).scalar()
+                    tarjeta_existente = session.query(Tarjeta).filter(Tarjeta.id_tarjeta == tarjeta_data["idTarjeta"]).first()
                     
-                    if result == 0:
-                        # Obtener el ID interno de la cuenta
-                        cuenta_id = session.execute(
-                            text("SELECT id FROM cuentas WHERE id = :id_cuenta"),
-                            {"id_cuenta": tarjeta["idCuenta"]}
-                        ).scalar()
-                        
-                        if cuenta_id:
-                            # Insertar tarjeta
-                            session.execute(
-                                text("""
-                                INSERT INTO tarjetas 
-                                (id_tarjeta, numero_tarjeta, tipo_tarjeta, id_cuenta, id_cliente, 
-                                fecha_vencimiento, cvv, estado_tarjeta, limite_credito, 
-                                id_usuario_creacion, id_usuario_edicion, fecha_creacion, fecha_edicion, activo)
-                                VALUES 
-                                (:id_tarjeta, :numero_tarjeta, :tipo_tarjeta, :id_cuenta, :id_cliente, 
-                                :fecha_vencimiento, :cvv, :estado_tarjeta, :limite_credito, 
-                                :id_usuario_creacion, :id_usuario_edicion, :fecha_creacion, :fecha_edicion, :activo)
-                                """),
-                                {
-                                    "id_tarjeta": tarjeta["idTarjeta"],
-                                    "numero_tarjeta": tarjeta["numeroTarjeta"],
-                                    "tipo_tarjeta": tarjeta["tipoTarjeta"],
-                                    "id_cuenta": tarjeta["idCuenta"],
-                                    "id_cliente": tarjeta["idCliente"],
-                                    "fecha_vencimiento": tarjeta["fechaVencimiento"],
-                                    "cvv": tarjeta["cvv"],
-                                    "estado_tarjeta": tarjeta["estadoTarjeta"],
-                                    "limite_credito": tarjeta.get("limiteCredito"),
-                                    "id_usuario_creacion": tarjeta["id_usuario_creacion"],
-                                    "id_usuario_edicion": tarjeta.get("id_usuario_edicion"),
-                                    "fecha_creacion": tarjeta["fecha_creacion"],
-                                    "fecha_edicion": tarjeta.get("fecha_edicion"),
-                                    "activo": tarjeta.get("activo", True)
-                                }
+                    if not tarjeta_existente:
+                        # Verificar si la cuenta y el cliente existen
+                        cuenta = session.query(Cuenta).filter(Cuenta.id == tarjeta_data["idCuenta"]).first()
+                        cliente = session.query(Cliente).filter(Cliente.id_cliente == tarjeta_data["idCliente"]).first()
+                        admin_user = session.query(Usuario).filter(Usuario.correo_electronico == 'admin@bancoapi.com').first()
+
+                        if cuenta and cliente and admin_user:
+                            # Crear nueva tarjeta
+                            nueva_tarjeta = Tarjeta(
+                                id_tarjeta=tarjeta_data['idTarjeta'],
+                                numero_tarjeta=tarjeta_data['numeroTarjeta'],
+                                tipo_tarjeta=tarjeta_data['tipoTarjeta'],
+                                id_cuenta=tarjeta_data['idCuenta'],
+                                id_cliente=tarjeta_data['idCliente'],
+                                fecha_vencimiento=datetime.strptime(tarjeta_data['fechaVencimiento'], '%Y-%m-%d'),
+                                cvv=tarjeta_data['cvv'],
+                                estado_tarjeta=tarjeta_data['estadoTarjeta'],
+                                limite_credito=tarjeta_data.get('limiteCredito'),
+                                id_usuario_creacion=admin_user.id,
+                                fecha_creacion=datetime.now(),
+                                activo=tarjeta_data.get('activo', True)
                             )
+                            
+                            session.add(nueva_tarjeta)
+                        else:
+                            print(f"Advertencia: No se pudo migrar la tarjeta {tarjeta_data['idTarjeta']} - cuenta, cliente o usuario administrador no encontrado.")
                 session.commit()
             print(f"✅ Migradas {len(tarjetas)} tarjetas")
     except Exception as e:
@@ -255,51 +270,37 @@ def migrate_prestamos():
                 prestamos = json.load(f)
             
             with SessionLocal() as session:
-                for prestamo in prestamos:
+                for prestamo_data in prestamos:
                     # Verificar si el préstamo ya existe
-                    result = session.execute(
-                        text("SELECT COUNT(*) FROM prestamos WHERE id_prestamo = :id_prestamo"),
-                        {"id_prestamo": prestamo["idPrestamo"]}
-                    ).scalar()
+                    prestamo_existente = session.query(Prestamo).filter(Prestamo.id_prestamo == prestamo_data["idPrestamo"]).first()
                     
-                    if result == 0:
-                        # Obtener el ID interno de la cuenta
-                        cuenta_id = session.execute(
-                            text("SELECT id FROM cuentas WHERE id = :id_cuenta"),
-                            {"id_cuenta": prestamo["idCuenta"]}
-                        ).scalar()
-                        
-                        if cuenta_id:
-                            # Insertar préstamo
-                            session.execute(
-                                text("""
-                                INSERT INTO prestamos 
-                                (id_prestamo, id_cliente, numero_prestamo, monto_prestado, tasa_interes, 
-                                plazo_meses, fecha_desembolso, saldo_pendiente, estado_prestamo, id_cuenta, 
-                                id_usuario_creacion, id_usuario_edicion, fecha_creacion, fecha_edicion, activo)
-                                VALUES 
-                                (:id_prestamo, :id_cliente, :numero_prestamo, :monto_prestado, :tasa_interes, 
-                                :plazo_meses, :fecha_desembolso, :saldo_pendiente, :estado_prestamo, :id_cuenta, 
-                                :id_usuario_creacion, :id_usuario_edicion, :fecha_creacion, :fecha_edicion, :activo)
-                                """),
-                                {
-                                    "id_prestamo": prestamo["idPrestamo"],
-                                    "id_cliente": prestamo["idCliente"],
-                                    "numero_prestamo": prestamo["numeroPrestamo"],
-                                    "monto_prestado": prestamo["montoPrestado"],
-                                    "tasa_interes": prestamo["tasaInteres"],
-                                    "plazo_meses": prestamo["plazoMeses"],
-                                    "fecha_desembolso": prestamo["fechaDesembolso"],
-                                    "saldo_pendiente": prestamo["saldoPendiente"],
-                                    "estado_prestamo": prestamo["estadoPrestamo"],
-                                    "id_cuenta": prestamo["idCuenta"],
-                                    "id_usuario_creacion": prestamo["id_usuario_creacion"],
-                                    "id_usuario_edicion": prestamo.get("id_usuario_edicion"),
-                                    "fecha_creacion": prestamo["fecha_creacion"],
-                                    "fecha_edicion": prestamo.get("fecha_edicion"),
-                                    "activo": prestamo.get("activo", True)
-                                }
+                    if not prestamo_existente:
+                        # Verificar si el cliente, la cuenta y el usuario administrador existen
+                        cliente = session.query(Cliente).filter(Cliente.id_cliente == prestamo_data["idCliente"]).first()
+                        cuenta = session.query(Cuenta).filter(Cuenta.id == prestamo_data["idCuenta"]).first()
+                        admin_user = session.query(Usuario).filter(Usuario.correo_electronico == 'admin@bancoapi.com').first()
+
+                        if cliente and cuenta and admin_user:
+                            # Crear nuevo préstamo
+                            nuevo_prestamo = Prestamo(
+                                id_prestamo=prestamo_data['idPrestamo'],
+                                id_cliente=prestamo_data['idCliente'],
+                                numero_prestamo=prestamo_data['numeroPrestamo'],
+                                monto_prestado=prestamo_data['montoPrestado'],
+                                tas_interes=prestamo_data['tasaInteres'],
+                                plazo_meses=prestamo_data['plazoMeses'],
+                                fecha_desembolso=datetime.strptime(prestamo_data['fechaDesembolso'], '%Y-%m-%d'),
+                                saldo_pendiente=prestamo_data['saldoPendiente'],
+                                estado_prestamo=prestamo_data['estadoPrestamo'],
+                                id_cuenta=prestamo_data['idCuenta'],
+                                id_usuario_creacion=admin_user.id,
+                                fecha_creacion=datetime.now(),
+                                activo=prestamo_data.get('activo', True)
                             )
+                            
+                            session.add(nuevo_prestamo)
+                        else:
+                            print(f"Advertencia: No se pudo migrar el préstamo {prestamo_data['idPrestamo']} - cliente, cuenta o usuario administrador no encontrado.")
                 session.commit()
             print(f"✅ Migrados {len(prestamos)} préstamos")
     except Exception as e:
@@ -315,36 +316,33 @@ def migrate_sucursales():
                 sucursales = json.load(f)
             
             with SessionLocal() as session:
-                for sucursal in sucursales:
+                for sucursal_data in sucursales:
                     # Verificar si la sucursal ya existe
-                    result = session.execute(
-                        text("SELECT COUNT(*) FROM sucursales WHERE id_sucursal = :id_sucursal"),
-                        {"id_sucursal": sucursal["idSucursal"]}
-                    ).scalar()
+                    sucursal_existente = session.query(Sucursal).filter(Sucursal.id_sucursal == sucursal_data["idSucursal"]).first()
                     
-                    if result == 0:
-                        # Insertar sucursal
-                        session.execute(
-                            text("""
-                            INSERT INTO sucursales 
-                            (id_sucursal, nombre_sucursal, direccion, ciudad, codigo_postal, 
-                            telefono, gerente_id, estado_sucursal, activo)
-                            VALUES 
-                            (:id_sucursal, :nombre_sucursal, :direccion, :ciudad, :codigo_postal, 
-                            :telefono, :gerente_id, :estado_sucursal, :activo)
-                            """),
-                            {
-                                "id_sucursal": sucursal["idSucursal"],
-                                "nombre_sucursal": sucursal["nombreSucursal"],
-                                "direccion": sucursal["direccion"],
-                                "ciudad": sucursal["ciudad"],
-                                "codigo_postal": sucursal["codigoPostal"],
-                                "telefono": sucursal["telefono"],
-                                "gerente_id": sucursal.get("gerenteId"),
-                                "estado_sucursal": sucursal["estadoSucursal"],
-                                "activo": sucursal.get("activo", True)
-                            }
-                        )
+                    if not sucursal_existente:
+                        admin_user = session.query(Usuario).filter(Usuario.correo_electronico == 'admin@bancoapi.com').first()
+                        gerente = None
+                        if sucursal_data.get("gerenteId"):
+                            gerente = session.query(Empleado).filter(Empleado.id_empleado == sucursal_data["gerenteId"]).first()
+
+                        if admin_user:
+                            # Crear nueva sucursal
+                            nueva_sucursal = Sucursal(
+                                id_sucursal=sucursal_data['idSucursal'],
+                                nombre_sucursal=sucursal_data['nombreSucursal'],
+                                direccion=sucursal_data['direccion'],
+                                ciudad=sucursal_data['ciudad'],
+                                codigo_postal=sucursal_data['codigoPostal'],
+                                telefono=sucursal_data['telefono'],
+                                gerente_id=sucursal_data.get('gerenteId'),
+                                estado_sucursal=sucursal_data['estadoSucursal'],
+                                activo=sucursal_data.get('activo', True)
+                            )
+                            
+                            session.add(nueva_sucursal)
+                        else:
+                            print(f"Advertencia: No se pudo migrar la sucursal {sucursal_data['idSucursal']} - usuario administrador no encontrado.")
                 session.commit()
             print(f"✅ Migradas {len(sucursales)} sucursales")
     except Exception as e:
@@ -360,44 +358,35 @@ def migrate_empleados():
                 empleados = json.load(f)
             
             with SessionLocal() as session:
-                for empleado in empleados:
+                for empleado_data in empleados:
                     # Verificar si el empleado ya existe
-                    result = session.execute(
-                        text("SELECT COUNT(*) FROM empleados WHERE id_empleado = :id_empleado"),
-                        {"id_empleado": empleado["idEmpleado"]}
-                    ).scalar()
+                    empleado_existente = session.query(Empleado).filter(Empleado.id_empleado == empleado_data["idEmpleado"]).first()
                     
-                    if result == 0:
-                        # Verificar si la sucursal existe
-                        sucursal_id = session.execute(
-                            text("SELECT id FROM sucursales WHERE id_sucursal = :id_sucursal"),
-                            {"id_sucursal": empleado["idSucursal"]}
-                        ).scalar()
-                        
-                        if sucursal_id:
-                            # Insertar empleado
-                            session.execute(
-                                text("""
-                                INSERT INTO empleados 
-                                (id_empleado, nombre_completo, cargo, id_sucursal, numero_documento, 
-                                tipo_documento, correo_electronico, telefono, estado_empleado, activo)
-                                VALUES 
-                                (:id_empleado, :nombre_completo, :cargo, :id_sucursal, :numero_documento, 
-                                :tipo_documento, :correo_electronico, :telefono, :estado_empleado, :activo)
-                                """),
-                                {
-                                    "id_empleado": empleado["idEmpleado"],
-                                    "nombre_completo": empleado["nombreCompleto"],
-                                    "cargo": empleado["cargo"],
-                                    "id_sucursal": empleado["idSucursal"],
-                                    "numero_documento": empleado["numeroDocumento"],
-                                    "tipo_documento": empleado["tipoDocumento"],
-                                    "correo_electronico": empleado["correoElectronico"],
-                                    "telefono": empleado["telefono"],
-                                    "estado_empleado": empleado["estadoEmpleado"],
-                                    "activo": empleado.get("activo", True)
-                                }
+                    if not empleado_existente:
+                        # Verificar si la sucursal y el usuario administrador existen
+                        sucursal = session.query(Sucursal).filter(Sucursal.id_sucursal == empleado_data["idSucursal"]).first()
+                        admin_user = session.query(Usuario).filter(Usuario.correo_electronico == 'admin@bancoapi.com').first()
+
+                        if sucursal and admin_user:
+                            # Crear nuevo empleado
+                            nuevo_empleado = Empleado(
+                                id_empleado=empleado_data['idEmpleado'],
+                                nombre_completo=empleado_data['nombreCompleto'],
+                                cargo=empleado_data['cargo'],
+                                id_sucursal=empleado_data['idSucursal'],
+                                numero_documento=empleado_data['numeroDocumento'],
+                                tipo_documento=empleado_data['tipoDocumento'],
+                                correo_electronico=empleado_data['correoElectronico'],
+                                telefono=empleado_data['telefono'],
+                                estado_empleado=empleado_data['estadoEmpleado'],
+                                activo=empleado_data.get('activo', True),
+                                id_usuario_creacion=admin_user.id,
+                                fecha_creacion=datetime.now()
                             )
+                            
+                            session.add(nuevo_empleado)
+                        else:
+                            print(f"Advertencia: No se pudo migrar el empleado {empleado_data['idEmpleado']} - sucursal o usuario administrador no encontrado.")
                 session.commit()
             print(f"✅ Migrados {len(empleados)} empleados")
     except Exception as e:
@@ -413,43 +402,34 @@ def migrate_cheques():
                 cheques = json.load(f)
             
             with SessionLocal() as session:
-                for cheque in cheques:
+                for cheque_data in cheques:
                     # Verificar si el cheque ya existe
-                    result = session.execute(
-                        text("SELECT COUNT(*) FROM cheques WHERE id_cheque = :id_cheque"),
-                        {"id_cheque": cheque["idCheque"]}
-                    ).scalar()
+                    cheque_existente = session.query(Cheque).filter(Cheque.id_cheque == cheque_data["idCheque"]).first()
                     
-                    if result == 0:
-                        # Obtener el ID interno de la cuenta
-                        cuenta_id = session.execute(
-                            text("SELECT id FROM cuentas WHERE id = :id_cuenta"),
-                            {"id_cuenta": cheque["idCuenta"]}
-                        ).scalar()
-                        
-                        if cuenta_id:
-                            # Insertar cheque
-                            session.execute(
-                                text("""
-                                INSERT INTO cheques 
-                                (id_cheque, numero_cheque, id_cuenta, monto, beneficiario, 
-                                fecha_emision, fecha_vencimiento, estado_cheque, activo)
-                                VALUES 
-                                (:id_cheque, :numero_cheque, :id_cuenta, :monto, :beneficiario, 
-                                :fecha_emision, :fecha_vencimiento, :estado_cheque, :activo)
-                                """),
-                                {
-                                    "id_cheque": cheque["idCheque"],
-                                    "numero_cheque": cheque["numeroCheque"],
-                                    "id_cuenta": cheque["idCuenta"],
-                                    "monto": cheque["monto"],
-                                    "beneficiario": cheque["beneficiario"],
-                                    "fecha_emision": cheque["fechaEmision"],
-                                    "fecha_vencimiento": cheque["fechaVencimiento"],
-                                    "estado_cheque": cheque["estadoCheque"],
-                                    "activo": cheque.get("activo", True)
-                                }
+                    if not cheque_existente:
+                        # Verificar si la cuenta y el usuario administrador existen
+                        cuenta = session.query(Cuenta).filter(Cuenta.id == cheque_data["idCuenta"]).first()
+                        admin_user = session.query(Usuario).filter(Usuario.correo_electronico == 'admin@bancoapi.com').first()
+
+                        if cuenta and admin_user:
+                            # Crear nuevo cheque
+                            nuevo_cheque = Cheque(
+                                id_cheque=cheque_data['idCheque'],
+                                numero_cheque=cheque_data['numeroCheque'],
+                                id_cuenta=cheque_data['idCuenta'],
+                                monto=cheque_data['monto'],
+                                beneficiario=cheque_data['beneficiario'],
+                                fecha_emision=datetime.strptime(cheque_data['fechaEmision'], '%Y-%m-%d'),
+                                fecha_vencimiento=datetime.strptime(cheque_data['fechaVencimiento'], '%Y-%m-%d'),
+                                estado_cheque=cheque_data['estadoCheque'],
+                                activo=cheque_data.get('activo', True),
+                                id_usuario_creacion=admin_user.id,
+                                fecha_creacion=datetime.now()
                             )
+                            
+                            session.add(nuevo_cheque)
+                        else:
+                            print(f"Advertencia: No se pudo migrar el cheque {cheque_data['idCheque']} - cuenta o usuario administrador no encontrado.")
                 session.commit()
             print(f"✅ Migrados {len(cheques)} cheques")
     except Exception as e:
@@ -465,50 +445,36 @@ def migrate_inversiones():
                 inversiones = json.load(f)
             
             with SessionLocal() as session:
-                for inversion in inversiones:
+                for inversion_data in inversiones:
                     # Verificar si la inversión ya existe
-                    result = session.execute(
-                        text("SELECT COUNT(*) FROM inversiones WHERE id_inversion = :id_inversion"),
-                        {"id_inversion": inversion["idInversion"]}
-                    ).scalar()
+                    inversion_existente = session.query(Inversion).filter(Inversion.id_inversion == inversion_data["idInversion"]).first()
                     
-                    if result == 0:
-                        # Obtener el ID interno de la cuenta
-                        cuenta_id = session.execute(
-                            text("SELECT id FROM cuentas WHERE id = :id_cuenta"),
-                            {"id_cuenta": inversion["idCuenta"]}
-                        ).scalar()
-                        
-                        if cuenta_id:
-                            # Insertar inversión
-                            session.execute(
-                                text("""
-                                INSERT INTO inversiones 
-                                (id_inversion, id_cliente, tipo_inversion, monto_invertido, fecha_inicio, 
-                                plazo, rendimiento_esperado, estado_inversion, id_cuenta, 
-                                id_usuario_creacion, id_usuario_edicion, fecha_creacion, fecha_edicion, activo)
-                                VALUES 
-                                (:id_inversion, :id_cliente, :tipo_inversion, :monto_invertido, :fecha_inicio, 
-                                :plazo, :rendimiento_esperado, :estado_inversion, :id_cuenta, 
-                                :id_usuario_creacion, :id_usuario_edicion, :fecha_creacion, :fecha_edicion, :activo)
-                                """),
-                                {
-                                    "id_inversion": inversion["idInversion"],
-                                    "id_cliente": inversion["idCliente"],
-                                    "tipo_inversion": inversion["tipoInversion"],
-                                    "monto_invertido": inversion["montoInvertido"],
-                                    "fecha_inicio": inversion["fechaInicio"],
-                                    "plazo": inversion["plazo"],
-                                    "rendimiento_esperado": inversion["rendimientoEsperado"],
-                                    "estado_inversion": inversion["estadoInversion"],
-                                    "id_cuenta": inversion["idCuenta"],
-                                    "id_usuario_creacion": inversion["id_usuario_creacion"],
-                                    "id_usuario_edicion": inversion.get("id_usuario_edicion"),
-                                    "fecha_creacion": inversion["fecha_creacion"],
-                                    "fecha_edicion": inversion.get("fecha_edicion"),
-                                    "activo": inversion.get("activo", True)
-                                }
+                    if not inversion_existente:
+                        # Verificar si el cliente, la cuenta y el usuario administrador existen
+                        cliente = session.query(Cliente).filter(Cliente.id_cliente == inversion_data["idCliente"]).first()
+                        cuenta = session.query(Cuenta).filter(Cuenta.id == inversion_data["idCuenta"]).first()
+                        admin_user = session.query(Usuario).filter(Usuario.correo_electronico == 'admin@bancoapi.com').first()
+
+                        if cliente and cuenta and admin_user:
+                            # Crear nueva inversión
+                            nueva_inversion = Inversion(
+                                id_inversion=inversion_data['idInversion'],
+                                id_cliente=inversion_data['idCliente'],
+                                tipo_inversion=inversion_data['tipoInversion'],
+                                monto_invertido=inversion_data['montoInvertido'],
+                                fecha_inicio=datetime.strptime(inversion_data['fechaInicio'], '%Y-%m-%d'),
+                                plazo=inversion_data['plazo'],
+                                rendimiento_esperado=inversion_data['rendimientoEsperado'],
+                                estado_inversion=inversion_data['estadoInversion'],
+                                id_cuenta=inversion_data['idCuenta'],
+                                id_usuario_creacion=admin_user.id,
+                                fecha_creacion=datetime.now(),
+                                activo=inversion_data.get('activo', True)
                             )
+                            
+                            session.add(nueva_inversion)
+                        else:
+                            print(f"Advertencia: No se pudo migrar la inversión {inversion_data['idInversion']} - cliente, cuenta o usuario administrador no encontrado.")
                 session.commit()
             print(f"✅ Migradas {len(inversiones)} inversiones")
     except Exception as e:
@@ -542,27 +508,6 @@ def delete_json_files():
         print(f"❌ Error eliminando archivos JSON: {e}")
         return False
 
-
-def eliminar_archivos_json():
-    """Elimina los archivos JSON después de la migración exitosa"""
-    try:
-        archivos_json = [
-            "apis/datos/clientes.json.json",
-            "apis/datos/cuentas.json.json",
-            "apis/datos/transacciones.json"
-        ]
-        
-        for archivo in archivos_json:
-            if os.path.exists(archivo):
-                # Crear una copia de respaldo antes de eliminar
-                backup_path = f"{archivo}.bak"
-                os.rename(archivo, backup_path)
-                print(f"Archivo {archivo} respaldado como {backup_path}")
-        
-        print("Todos los archivos JSON han sido respaldados")
-    except Exception as e:
-        print(f"Error al respaldar archivos JSON: {e}")
-
 def ejecutar_migracion():
     """Ejecuta todas las migraciones en orden"""
     try:
@@ -572,11 +517,17 @@ def ejecutar_migracion():
         migrate_clientes()
         migrate_cuentas()
         migrate_transacciones()
+        migrate_tarjetas()
+        migrate_prestamos()
+        migrate_sucursales()
+        migrate_empleados()
+        migrate_cheques()
+        migrate_inversiones()
         
         # Preguntar si se desean eliminar los archivos JSON
-        respuesta = input("¿Desea respaldar los archivos JSON? (s/n): ")
+        respuesta = input("¿Desea eliminar los archivos JSON originales después de la migración? (s/n): ")
         if respuesta.lower() == 's':
-            eliminar_archivos_json()
+            delete_json_files()
             
         print("Migración completada exitosamente")
     except Exception as e:
