@@ -1,45 +1,156 @@
-# src/routers/empleado.py
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from uuid import UUID
+
 import src.controller.empleados as empleado_controller
 from database.connection import get_db
-from src.schemas.empleado import EmpleadoCreate, EmpleadoResponse
+from src.auth.middleware import get_current_active_user
+from src.schemas.auth import UserResponse
+from src.schemas.empleados import EmpleadoCreate, EmpleadoResponse
+
+"""Creamos el router para los empleados
+Define un prefijo para las rutas y etiquetas para la documentación
+En todas las rutas usamos router en lugar de app ya que aqui se abre otra instancia de APIRouter"""
 
 router = APIRouter(prefix="/empleados", tags=["Empleados"])
 
-@router.post("/", response_model=EmpleadoResponse)
-def create_empleado(empleado: EmpleadoCreate, db: Session = Depends(get_db), current_user_id: UUID = None):
-    db_empleado = empleado_controller.create_empleado(db, empleado, current_user_id)
-    if not db_empleado:
-        raise HTTPException(status_code=400, detail="Error al crear empleado")
-    return JSONResponse(status_code=201, content={"detail": "Empleado creado", "data": db_empleado.__dict__})
 
-@router.get("/", response_model=list[EmpleadoResponse])
-def read_empleados(db: Session = Depends(get_db)):
-    empleados = empleado_controller.get_empleados(db)
-    if not empleados:
+@router.post("/empleados/", response_model=EmpleadoResponse, tags=["Empleados"])
+def create_empleado(
+    empleado: EmpleadoCreate,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_active_user),
+):
+    """Busca en la base de datos si ya existe un empleado con la misma cédula (idEmpleado)"""
+
+    db_empleado = empleado_controller.get_empleado(db, empleado_id=empleado.idEmpleado)
+
+    """Si el empleado ya está registrado, lanza una excepción HTTP con código 400 (Bad Request)"""
+
+    if db_empleado:
+
+        raise HTTPException(status_code=400, detail="Empleado ya registrado")
+    else:
+        empleado_creado = empleado_controller.create_empleado(db=db, empleado=empleado)
+
+        return JSONResponse(
+            status_code=201,
+            content={
+                "detail": "Empleado creado correctamente",   
+                "data": {
+                    "Id empleado": empleado.idEmpleado,
+                    "nombre": empleado.nombreEmpleado,
+                    "documento": empleado.documentoEmpleado,
+                    "cargo": empleado.cargo,
+                    "telefono": empleado.telefonoEmpleado,
+                    "email": empleado.correoEmpleado,
+                },
+            },
+        )
+
+
+@router.get("/empleados/", response_model=list[EmpleadoResponse], tags=["Empleados"])
+def read_all_empleados(
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_active_user),
+):
+    empleados_db = empleado_controller.get_empleados(db)
+    if not empleados_db:
         raise HTTPException(status_code=404, detail="No hay empleados registrados")
-    return empleados
+    return empleados_db     
 
-@router.get("/{empleado_id}", response_model=EmpleadoResponse)
-def read_empleado(empleado_id: UUID, db: Session = Depends(get_db)):
-    db_empleado = empleado_controller.get_empleado(db, empleado_id)
-    if not db_empleado:
-        raise HTTPException(status_code=404, detail="Empleado no encontrado")
-    return db_empleado
 
-@router.put("/{empleado_id}", response_model=EmpleadoResponse)
-def update_empleado(empleado_id: UUID, empleado: EmpleadoCreate, db: Session = Depends(get_db), current_user_id: UUID = None):
-    db_empleado = empleado_controller.update_empleado(db, empleado_id, empleado, current_user_id)
-    if not db_empleado:
-        raise HTTPException(status_code=404, detail="Empleado no encontrado")
-    return JSONResponse(status_code=200, content={"detail": "Empleado actualizado", "data": db_empleado.__dict__})
+"""
+    Obtiene todos los empleados registrados en la base de datos.
 
-@router.delete("/{empleado_id}", response_model=EmpleadoResponse)
-def delete_empleado(empleado_id: UUID, db: Session = Depends(get_db)):
-    db_empleado = empleado_controller.delete_empleado(db, empleado_id)
-    if not db_empleado:
+    Args:
+        db (Session): Sesión de base de datos proporcionada por la dependencia `get_db`.
+
+    Returns:
+        list[schemas.Empleado]: Lista de empleados registrados.
+
+    Raises:
+        HTTPException: Si no hay empleados registrados, retorna un error 404 con el detalle "No hay empleados registrados".
+"""
+
+
+@router.get(
+    "/empleados/{empleado_id}", response_model=EmpleadoResponse, tags=["Empleados"]
+)
+def read_one_empleado(empleado_id: str, db: Session = Depends(get_db)):
+    db_empleado = empleado_controller.get_empleado(db, empleado_id=empleado_id)
+    if db_empleado is None:
         raise HTTPException(status_code=404, detail="Empleado no encontrado")
-    return JSONResponse(status_code=200, content={"detail": "Empleado eliminado", "data": db_empleado.__dict__})
+    else:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "detail": "Empleado encontrado correctamente", 
+                "data": {
+                    "Id empleado": db_empleado.idEmpleado,
+                    "nombre": db_empleado.nombre,
+                    "apellido": db_empleado.apellido,
+                    "documento": db_empleado.documento,
+                    "direccion": db_empleado.direccion,
+                    "telefono": db_empleado.telefono,
+                    "email": db_empleado.email,
+                    "fechaNacimiento": db_empleado.fechaNacimiento,
+                },
+            },
+        )
+
+
+@router.delete(
+    "/empleados/{empleado_id}", response_model=EmpleadoResponse, tags=["Empleados"]
+)
+def delete_empleado(empleado_id: str, db: Session = Depends(get_db)):
+    db_empleado = empleado_controller.delete_empleado(db, empleado_id=empleado_id)
+    if db_empleado is None:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado")
+    else:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "detail": "Empleado eliminado correctamente",
+                "data": {
+                    "Id empleado": db_empleado.idEmpleado,
+                    "nombre": db_empleado.nombre,
+                    "apellido": db_empleado.apellido,
+                    "documento": db_empleado.documento,
+                    "direccion": db_empleado.direccion,
+                    "telefono": db_empleado.telefono,
+                    "email": db_empleado.email,
+                    "fechaNacimiento": db_empleado.fechaNacimiento,
+                },
+            },
+        )
+
+
+@router.put(
+    "/empleados/{empleado_id}", response_model=EmpleadoResponse, tags=["Empleados"]
+)
+def update_empleado(    
+    empleado_id: str, empleado: EmpleadoCreate, db: Session = Depends(get_db)
+):
+    db_empleado = empleado_controller.update_empleado(
+        db, empleado_id=empleado_id, empleado=empleado
+    )
+    if db_empleado is None:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado")
+    else:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "detail": "Empleado actualizado correctamente",
+                "data": {
+                    "Id empleado": db_empleado.idEmpleado,
+                    "nombre": db_empleado.nombre,
+                    "apellido": db_empleado.apellido,
+                    "documento": db_empleado.documento,
+                    "direccion": db_empleado.direccion,
+                    "telefono": db_empleado.telefono,
+                    "email": db_empleado.email,
+                    "fechaNacimiento": db_empleado.fechaNacimiento,
+                },
+            },
+        )

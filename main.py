@@ -14,13 +14,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.migrations import print_migration_status, run_migrations
 from src.routers import (
-    Citas,
-    Diagnosticos,
-    Enfermeras,
-    Facturas,
-    Medicos,
+    cheques,
+    clientes,
+    cuentas,
+    empleados,
+    prestamos,
     auth,
-    pacientes,
+    tarjetas,
+    transacciones,
 )
 
 # Configurar logging
@@ -33,17 +34,15 @@ app = FastAPI(
     version="1.0.0",
     openapi_tags=[
         {
-            "name": "Pacientes",
-            "description": "Operaciones relacionadas con el manejo de pacientes.",
+            "name": "Cheques",
+            "description": "Operaciones relacionadas con el manejo de cheques.",
         },
-        {"name": "Médicos", "description": "Gestión de información de médicos."},
-        {"name": "Enfermeras", "description": "Gestion de información de enfermeras."},
-        {"name": "Citas", "description": "Agendamiento y consulta de citas médicas."},
-        {
-            "name": "Diagnósticos",
-            "description": "Registro y consulta de diagnósticos médicos.",
-        },
-        {"name": "Facturas", "description": "Gestión de facturación y pagos."},
+        {"name": "Clientes", "description": "Gestión de información de clientes."},
+        {"name": "Cuentas", "description": "Gestión de información de cuentas."},
+        {"name": "Empleados", "description": "Gestión de información de empleados."},
+        {"name": "Préstamos", "description": "Gestión de información de préstamos."},
+        {"name": "Tarjetas", "description": "Gestión de información de tarjetas."},
+        {"name": "Transacciones", "description": "Gestión de información de transacciones."},
     ],
 )
 
@@ -59,12 +58,13 @@ app.add_middleware(
 app.include_router(auth.router)
 
 # Incluir routers médicos (con protección JWT)
-app.include_router(pacientes.router)
-app.include_router(Medicos.router)
-app.include_router(Enfermeras.router)
-app.include_router(Citas.router)
-app.include_router(Diagnosticos.router)
-app.include_router(Facturas.router)
+app.include_router(cheques.router)
+app.include_router(clientes.router)
+app.include_router(cuentas.router)
+app.include_router(empleados.router)
+app.include_router(prestamos.router)
+app.include_router(tarjetas.router)
+app.include_router(transacciones.router)
 
 origins = [
     "http://localhost",

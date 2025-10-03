@@ -13,6 +13,7 @@ class Prestamos(Base):
 
     idPrestamo = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     idCliente = Column(UUID(as_uuid=True), ForeignKey("clientes.idCliente"), nullable=False)
+    idEmpleado = Column(UUID(as_uuid=True), ForeignKey("empleados.idEmpleado"), nullable=False)
 
     monto = Column(Float, nullable=False)
     interes = Column(Float, nullable=False)
@@ -27,3 +28,4 @@ class Prestamos(Base):
 
     # Relaciones
     cliente = relationship("Clientes", back_populates="prestamos")
+    empleado = relationship("Empleados", back_populates="prestamos")

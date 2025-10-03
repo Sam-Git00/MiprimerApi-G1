@@ -9,26 +9,25 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr
 
 
-class MedicoBase(BaseModel):
-    """Base schema for Medico with common fields."""
+class PrestamoBase(BaseModel):
+    """Base schema for Prestamo with common fields."""
+    idCliente: UUID
+    idEmpleado: UUID
+    montoPrestamo: float
+    interes: float
+    plazoMeses: int
+    estado: str
 
-    idMedico: str
-    nombreMedico: str
-    correoMedico: EmailStr
-    telefonoMedico: Optional[str] = None
-    especialidad: Optional[str] = None
-    numeroColegiatura: Optional[str] = None
 
-
-class MedicoCreate(MedicoBase):
-    """Schema for creating a new Medico."""
+class PrestamoCreate(PrestamoBase):
+    """Schema for creating a new Prestamo."""
 
     pass
 
 
-class MedicoResponse(MedicoBase):
-    """Schema for Medico response."""
-
+class PrestamoResponse(PrestamoBase):
+    """Schema for Prestamo response."""
+    idPrestamo: UUID
     id_usuario_creacion: Optional[UUID] = None
     id_usuario_actualizacion: Optional[UUID] = None
     fecha_creacion: Optional[datetime] = None

@@ -4,9 +4,11 @@ from src.entities.tarjetas import Tarjetas
 
 def create_tarjeta(db: Session, tarjeta: Tarjetas):
     new_tarjeta = Tarjetas(
-        idCliente=tarjeta.idCliente,
+        idCuenta=tarjeta.idCuenta,
         numeroTarjeta=tarjeta.numeroTarjeta,
         tipo=tarjeta.tipo,
+        limiteCredito=tarjeta.limiteCredito,
+        saldoDisponible=tarjeta.saldoDisponible,
         fechaExpiracion=tarjeta.fechaExpiracion,
         estado=tarjeta.estado,
     )
@@ -27,9 +29,11 @@ def get_tarjetas(db: Session):
 def update_tarjeta(db: Session, tarjeta_id: str, tarjeta: Tarjetas):
     db_tarjeta = db.query(Tarjetas).filter(Tarjetas.idTarjeta == tarjeta_id).first()
     if db_tarjeta:
-        db_tarjeta.idCliente = tarjeta.idCliente
+        db_tarjeta.idCuenta = tarjeta.idCuenta
         db_tarjeta.numeroTarjeta = tarjeta.numeroTarjeta
         db_tarjeta.tipo = tarjeta.tipo
+        db_tarjeta.limiteCredito = tarjeta.limiteCredito
+        db_tarjeta.saldoDisponible = tarjeta.saldoDisponible
         db_tarjeta.fechaExpiracion = tarjeta.fechaExpiracion
         db_tarjeta.estado = tarjeta.estado
         db.commit()

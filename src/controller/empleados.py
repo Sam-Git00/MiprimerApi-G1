@@ -11,7 +11,7 @@ def create_empleado(db: Session, empleado: Empleados):
         cargo=empleado.cargo,
         telefono=empleado.telefono,
         email=empleado.email,
-        fechaContratacion=empleado.fechaContratacion,
+        activo=empleado.activo,
     )
     db.add(new_empleado)
     db.commit()
@@ -39,7 +39,7 @@ def update_empleado(db: Session, empleado_id: str, empleado: Empleados):
         db_empleado.cargo = empleado.cargo
         db_empleado.telefono = empleado.telefono
         db_empleado.email = empleado.email
-        db_empleado.fechaContratacion = empleado.fechaContratacion
+        db_empleado.activo = empleado.activo
         db.commit()
         db.refresh(db_empleado)
     return db_empleado

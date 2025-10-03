@@ -15,7 +15,7 @@ class UserBase(BaseModel):
     username: str
     email: EmailStr
     nombre_completo: str
-    rol: str = "usuario"  # usuario, admin, medico, enfermera
+    rol: str = "usuario"  # usuario, admin, empleado
 
 
 class UserCreate(UserBase):

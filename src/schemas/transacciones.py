@@ -1,5 +1,5 @@
 """
-Pydantic schemas for Factura entity.
+Pydantic schemas for Paciente entity.
 """
 
 from datetime import datetime
@@ -9,27 +9,26 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class FacturaBase(BaseModel):
-    """Base schema for Factura with common fields."""
+class TransaccionBase(BaseModel):
+    """Base schema for Transaccion with common fields."""
 
-    idPaciente: UUID
-    idCita: UUID
+    idCuenta: UUID
+    tipo: str
     monto: float
+    fecha: datetime
     descripcion: str
-    fechaEmision: datetime
-    estado: str = "pendiente"
 
 
-class FacturaCreate(FacturaBase):
-    """Schema for creating a new Factura."""
+class TransaccionCreate(TransaccionBase):
+    """Schema for creating a new Transaccion."""
 
     pass
 
 
-class FacturaResponse(FacturaBase):
-    """Schema for Factura response."""
+class TransaccionResponse(TransaccionBase):
+    """Schema for Transaccion response."""
 
-    idFactura: UUID
+    idTransaccion: UUID
     id_usuario_creacion: Optional[UUID] = None
     id_usuario_actualizacion: Optional[UUID] = None
     fecha_creacion: Optional[datetime] = None

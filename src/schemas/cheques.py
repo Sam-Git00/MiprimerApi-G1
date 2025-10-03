@@ -9,26 +9,25 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class CitaBase(BaseModel):
-    """Base schema for Cita with common fields."""
+class ChequeBase(BaseModel):
+    """Base schema for Cheque with common fields."""
 
-    idPaciente: UUID
-    idMedico: UUID
-    fechaAgendamiento: date
-    motivoConsulta: str
-    fechaEmision: datetime
+    idCliente: UUID
+    fechaEmision: date
+    monto: float
+    motivo: str
 
 
-class CitaCreate(CitaBase):
-    """Schema for creating a new Cita."""
+class ChequeCreate(ChequeBase):
+    """Schema for creating a new Cheque."""
 
     pass
 
 
-class CitaResponse(CitaBase):
-    """Schema for Cita response."""
+class ChequeResponse(ChequeBase):
+    """Schema for Cheque response."""
 
-    idCita: UUID
+    idCheque: UUID
     id_usuario_creacion: Optional[UUID] = None
     id_usuario_actualizacion: Optional[UUID] = None
     fecha_creacion: Optional[datetime] = None

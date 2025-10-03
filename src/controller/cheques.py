@@ -1,11 +1,10 @@
 from sqlalchemy.orm import Session
 from src.entities.cheques import Cheques
 
-# Crear Cheque
+# Crear Chequea
 def create_cheque(db: Session, cheque: Cheques):
     new_cheque = Cheques(
         idCliente=str(cheque.idCliente),
-        idCuenta=str(cheque.idCuenta),
         fechaEmision=cheque.fechaEmision,
         monto=cheque.monto,
         motivo=cheque.motivo,
@@ -31,10 +30,8 @@ def update_cheque(db: Session, cheque_id: str, cheque: Cheques):
     db_cheque = db.query(Cheques).filter(Cheques.idCheque == cheque_id).first()
     if db_cheque:
         db_cheque.idCliente = str(cheque.idCliente)
-        db_cheque.idCuenta = str(cheque.idCuenta)
         db_cheque.fechaEmision = cheque.fechaEmision
         db_cheque.monto = cheque.monto
-        db_cheque.estado = cheque.estado
         db_cheque.motivo = cheque.motivo
         db.commit()
         db.refresh(db_cheque)

@@ -12,12 +12,14 @@ class Tarjetas(Base):
     __tablename__ = "tarjetas"
 
     idTarjeta = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    idCliente = Column(UUID(as_uuid=True), ForeignKey("clientes.idCliente"), nullable=False)
+    idCuenta = Column(UUID(as_uuid=True), ForeignKey("cuentas.idCuenta"), nullable=False)
 
     numeroTarjeta = Column(String, unique=True, nullable=False, index=True)
-    tipoTarjeta = Column(String, nullable=False)  # Débito, Crédito
+    tipo = Column(String, nullable=False)  # Débito, Crédito
     limiteCredito = Column(Float, nullable=True)
     saldoDisponible = Column(Float, default=0.0)
+    estado = Column(String, default="Activa")
+    fechaExpiracion = Column(DateTime)
 
     # Auditoría
     id_usuario_creacion = Column(UUID(as_uuid=True), ForeignKey("empleados.idEmpleado"))
@@ -26,4 +28,4 @@ class Tarjetas(Base):
     fecha_actualizacion = Column(DateTime)
 
     # Relaciones
-    cliente = relationship("Clientes", back_populates="tarjetas")
+    cuenta = relationship("Cuentas", back_populates="tarjeta")

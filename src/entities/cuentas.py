@@ -11,10 +11,11 @@ class Cuentas(Base):
     __tablename__ = "cuentas"
 
     idCuenta = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    idUsuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"), nullable=False)
+    idCliente = Column(UUID(as_uuid=True), ForeignKey("clientes.idCliente"), nullable=False)
 
     numeroCuenta = Column(String, unique=True, nullable=False, index=True)
     tipoCuenta = Column(String, nullable=False)  # Ahorros / Corriente
+    estado = Column(String, default="Activa")
     saldo = Column(Numeric(14, 2), default=0.00)
 
     # Auditoría
@@ -24,6 +25,7 @@ class Cuentas(Base):
     fecha_actualizacion = Column(DateTime)
 
     # Relaciones
-    usuario = relationship("Usuario", back_populates="cuentas")
+    cliente = relationship("Clientes", back_populates="cuentas")
     transacciones = relationship("Transacciones", back_populates="cuenta")
-    cheques = relationship("Cheques", back_populates="cuenta")
+    tarjeta = relationship("Tarjetas", back_populates="cuenta")
+

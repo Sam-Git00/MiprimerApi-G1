@@ -5,10 +5,10 @@ from src.entities.prestamos import Prestamos
 def create_prestamo(db: Session, prestamo: Prestamos):
     new_prestamo = Prestamos(
         idCliente=prestamo.idCliente,
+        idEmpleado=prestamo.idEmpleado,
         monto=prestamo.monto,
-        tasaInteres=prestamo.tasaInteres,
-        fechaInicio=prestamo.fechaInicio,
-        fechaFin=prestamo.fechaFin,
+        interes=prestamo.interes,
+        plazo=prestamo.plazoMeses,
         estado=prestamo.estado,
     )
     db.add(new_prestamo)

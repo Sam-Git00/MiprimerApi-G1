@@ -23,40 +23,48 @@ def create_initial_users():
         # Usuario administrador
         admin_user = UserCreate(
             username="admin",
-            email="admin@hospital.com",
+            email="admin@banco.com",
             nombre_completo="Administrador del Sistema",
             password="admin123",
             rol="admin",
         )
 
-        # Usuario médico
-        medico_user = UserCreate(
-            username="dr_garcia",
-            email="dr.garcia@hospital.com",
-            nombre_completo="Dr. Carlos García",
-            password="medico123",
-            rol="medico",
+        # Usuario empleado
+        empleado_user = UserCreate(
+            username="empleado_test",
+            email="empleado.test@banco.com",
+            nombre_completo="Empleado Test",
+            password="empleado123",
+            rol="empleado",
         )
 
-        # Usuario enfermera
-        enfermera_user = UserCreate(
-            username="enfermera_lopez",
-            email="enfermera.lopez@hospital.com",
-            nombre_completo="María López",
-            password="enfermera123",
-            rol="enfermera",
+        # Usuario cuenta
+        cuenta_user = UserCreate(
+            username="cuenta_test",
+            email="cuenta.test@banco.com",
+            nombre_completo="Cuenta Test",
+            password="cuenta123",
+            rol="cuenta",
         )
 
         # Usuario regular
         usuario_user = UserCreate(
             username="usuario_test",
-            email="usuario@hospital.com",
+            email="usuario@banco.com",
             nombre_completo="Usuario de Prueba",
             password="usuario123",
             rol="usuario",
         )
 
-        users_to_create = [admin_user, medico_user, enfermera_user, usuario_user]
+        users_to_create = [admin_user, empleado_user, cuenta_user, usuario_user]
+
+        for user_data in users_to_create:
+            try:
+                create_user(db, user_data)
+                print(f"Usuario creado: {user_data.username} ({user_data.rol})")
+            except ValueError as e:
+                print(f"Usuario {user_data.username} ya existe: {e}")
+        users_to_create = [admin_user, empleado_user, cuenta_user, usuario_user]
 
         for user_data in users_to_create:
             try:
@@ -68,8 +76,8 @@ def create_initial_users():
         print("\nUsuarios iniciales creados exitosamente!")
         print("\nCredenciales de acceso:")
         print("\nAdmin: admin / admin123")
-        print("\nMédico: dr_garcia / medico123")
-        print("\nfermera: enfermera_lopez / enfermera123")
+        print("\nEmpleado: empleado_test / empleado123")
+        print("\nCuenta: cuenta_test / cuenta123")
         print("\nUsuario: usuario_test / usuario123")
 
     except Exception as e:
